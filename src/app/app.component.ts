@@ -9,16 +9,91 @@ import {
   StepEditorContext,
   StepsConfiguration,
   ToolboxConfiguration,
-  ValidatorConfiguration
+  ValidatorConfiguration,
+  BranchedStep
 } from 'sequential-workflow-designer';
 
 function createStep(): Step {
   return {
-    id: Uid.next(),
     componentType: 'task',
+    id: Uid.next(),
+    type: 'task',
     name: 'Step',
-    properties: { velocity: 0 },
-    type: 'task'
+    properties: {
+      velocity: 0
+    }
+  };
+}
+
+function createContainer(): Step {
+  return {
+    componentType: 'container',
+    id: Uid.next(),
+    type: 'foreach',
+    name: 'Foreach of users',
+    properties: {
+      itemsSource: 'select * from users'
+    }
+  };
+}
+
+function createSwitch(): BranchedStep {
+  return {
+    componentType: 'switch',
+    id: Uid.next(),
+    type: 'if',
+    name: 'Switch',
+    properties: {
+      variable: 'a',
+      expression: 'if (a > 10) return branchA; return branchB; return branchC;'
+    },
+    branches: {
+      'branchA': [
+        createScreen(),
+      ],
+      'branchB': [
+        createAPI(),
+      ],
+      'branchC': [
+        createLogicRule(),
+      ]
+    }
+  };
+}
+
+function createScreen(): Step {
+  return {
+    componentType: 'task',
+    id: Uid.next(),
+    type: 'task',
+    name: 'Screen name',
+    properties: {
+      velocity: 0
+    }
+  };
+}
+
+function createAPI(): Step {
+  return {
+    componentType: 'task',
+    id: Uid.next(),
+    type: 'task',
+    name: 'API name',
+    properties: {
+      velocity: 0
+    }
+  };
+}
+
+function createLogicRule(): Step {
+  return {
+    componentType: 'task',
+    id: Uid.next(),
+    type: 'task',
+    name: 'Logic Rule name',
+    properties: {
+      velocity: 0
+    }
   };
 }
 
@@ -27,7 +102,9 @@ function createDefinition(): Definition {
     properties: {
       velocity: 0
     },
-    sequence: [createStep()]
+    sequence: [
+      createScreen()
+    ]
   };
 }
 
@@ -51,8 +128,32 @@ export class AppComponent implements OnInit {
   public readonly toolboxConfiguration: ToolboxConfiguration = {
     groups: [
       {
-        name: 'Step',
-        steps: [createStep()]
+        name: 'Logic',
+        steps: [
+          // createContainer(),
+          createSwitch(),
+        ]
+      },
+      {
+        name: 'Select Screen',
+        steps: [
+          createScreen(),
+          createScreen(),
+        ]
+      },
+      {
+        name: 'Select API',
+        steps: [
+          createAPI(),
+          createAPI(),
+        ]
+      },
+      {
+        name: 'Select Logic Rule',
+        steps: [
+          createLogicRule(),
+          createLogicRule(),
+        ]
       }
     ]
   };

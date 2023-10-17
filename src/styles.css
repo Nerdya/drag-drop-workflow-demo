@@ -5,14 +5,17 @@ textarea,
 button {
   font: 13px/1.3em Arial, Verdana, Serif;
 }
+
 body {
   margin: 0;
   padding: 0;
 }
+
 a {
   color: #2c18df;
   text-decoration: none;
 }
+
 a:hover {
   text-decoration: underline;
 }
@@ -20,6 +23,7 @@ a:hover {
 .full-width {
   width: 100%;
 }
+
 textarea {
   font-size: 9pt !important;
   line-height: 1.2em !important;
@@ -27,8 +31,9 @@ textarea {
 
 .sqd-designer-angular {
   width: 100vw;
-  height: 50vh;
+  height: 75vh;
 }
+
 .sqd-editor {
   padding: 10px;
 }
@@ -36,4 +41,19 @@ textarea {
 .block {
   text-align: center;
   margin: 10px;
+}
+
+/* Customize */
+.mat-tab-label {
+  min-width: auto !important;
+}
+
+.sqd-toolbox {
+  width: 200px !important;
+}
+
+.sqd-toolbox-filter,
+.sqd-toolbox-group-title,
+.sqd-toolbox-item {
+  width: 180px !important;
 }
