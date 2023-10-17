@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {
   Definition,
   Designer,
@@ -10,29 +10,51 @@ import {
   StepsConfiguration,
   ToolboxConfiguration,
   ValidatorConfiguration,
-  BranchedStep
+  BranchedStep,
+  SequentialStep,
 } from 'sequential-workflow-designer';
+import {response} from "./response";
 
-function createStep(): Step {
+function createTask(): Step {
   return {
     componentType: 'task',
     id: Uid.next(),
     type: 'task',
-    name: 'Step',
+    name: 'Task',
     properties: {
-      velocity: 0
+      value: 0
     }
   };
 }
 
-function createContainer(): Step {
+function createContainer(): SequentialStep {
   return {
     componentType: 'container',
     id: Uid.next(),
-    type: 'foreach',
-    name: 'Foreach of users',
+    type: 'empty',
+    name: 'Container',
     properties: {
-      itemsSource: 'select * from users'
+      value: 0,
+    },
+    sequence: [
+    ]
+  };
+}
+
+function createIf(): BranchedStep {
+  return {
+    componentType: 'switch',
+    id: Uid.next(),
+    type: 'if',
+    name: 'If-else',
+    properties: {
+      value: 0,
+    },
+    branches: {
+      'true': [
+      ],
+      'false': [
+      ],
     }
   };
 }
@@ -41,21 +63,17 @@ function createSwitch(): BranchedStep {
   return {
     componentType: 'switch',
     id: Uid.next(),
-    type: 'if',
+    type: 'parallel',
     name: 'Switch',
     properties: {
-      variable: 'a',
-      expression: 'if (a > 10) return branchA; return branchB; return branchC;'
+      value: 0,
     },
     branches: {
-      'branchA': [
-        createScreen(),
+      'Option A': [
       ],
-      'branchB': [
-        createAPI(),
+      'Option B': [
       ],
-      'branchC': [
-        createLogicRule(),
+      'Option C': [
       ]
     }
   };
@@ -65,10 +83,10 @@ function createScreen(): Step {
   return {
     componentType: 'task',
     id: Uid.next(),
-    type: 'task',
+    type: 'text',
     name: 'Screen name',
     properties: {
-      velocity: 0
+      value: 0
     }
   };
 }
@@ -77,10 +95,10 @@ function createAPI(): Step {
   return {
     componentType: 'task',
     id: Uid.next(),
-    type: 'task',
+    type: 'text',
     name: 'API name',
     properties: {
-      velocity: 0
+      value: 0
     }
   };
 }
@@ -89,10 +107,10 @@ function createLogicRule(): Step {
   return {
     componentType: 'task',
     id: Uid.next(),
-    type: 'task',
+    type: 'text',
     name: 'Logic Rule name',
     properties: {
-      velocity: 0
+      value: 0
     }
   };
 }
@@ -100,10 +118,10 @@ function createLogicRule(): Step {
 function createDefinition(): Definition {
   return {
     properties: {
-      velocity: 0
+      value: 0
     },
     sequence: [
-      createScreen()
+      createTask()
     ]
   };
 }
@@ -115,105 +133,150 @@ function createDefinition(): Definition {
 })
 export class AppComponent implements OnInit {
   title = 'drag-drop-workflow-demo';
+
   private designer?: Designer;
-
-  public definition: Definition = createDefinition();
-  public definitionJSON?: string;
-  public selectedStepId: string | null = null;
-  public isReadonly = false;
-  public isToolboxCollapsed = false;
-  public isEditorCollapsed = false;
-  public isValid?: boolean;
-
-  public readonly toolboxConfiguration: ToolboxConfiguration = {
-    groups: [
-      {
-        name: 'Logic',
-        steps: [
-          // createContainer(),
-          createSwitch(),
-        ]
-      },
-      {
-        name: 'Select Screen',
-        steps: [
-          createScreen(),
-          createScreen(),
-        ]
-      },
-      {
-        name: 'Select API',
-        steps: [
-          createAPI(),
-          createAPI(),
-        ]
-      },
-      {
-        name: 'Select Logic Rule',
-        steps: [
-          createLogicRule(),
-          createLogicRule(),
-        ]
+  definition: Definition = createDefinition();
+  stepsConfiguration: StepsConfiguration = {
+    iconUrlProvider: (componentType: string, type: string) => {
+      switch (componentType) {
+        case 'container': {
+          switch (type) {
+            case 'loop':
+              return `./assets/icon-loop.svg`;
+            default:
+              return null;
+          }
+        }
+        case 'switch': {
+          switch (type) {
+            case 'if':
+              return `./assets/icon-if.svg`;
+            case 'parallel':
+              return `./assets/icon-if.svg`;
+            default:
+              return null;
+          }
+        }
+        case 'task': {
+          switch (type) {
+            case 'text':
+              return `./assets/icon-text.svg`;
+            case 'task':
+              return `./assets/icon-task.svg`;
+            case 'save':
+              return `./assets/icon-save.svg`;
+            default:
+              return null;
+          }
+        }
       }
-    ]
+      return null;
+    }
   };
-  public readonly stepsConfiguration: StepsConfiguration = {
-    iconUrlProvider: () => './assets/angular-icon.svg'
+  validatorConfiguration: ValidatorConfiguration = {
+    step: (step: Step) => !!step.name && Number(step.properties['value']) >= 0,
+    root: (definition: Definition) => Number(definition.properties['value']) >= 0
   };
-  public readonly validatorConfiguration: ValidatorConfiguration = {
-    step: (step: Step) => !!step.name && Number(step.properties['velocity']) >= 0,
-    root: (definition: Definition) => Number(definition.properties['velocity']) >= 0
-  };
+  toolboxConfiguration!: ToolboxConfiguration;
 
-  public ngOnInit() {
+  definitionJSON?: string;
+  selectedStepId: string | null = null;
+  isReadonly = false;
+  isToolboxCollapsed = false;
+  isEditorCollapsed = false;
+  isValid?: boolean;
+
+  ngOnInit() {
+    this.initToolboxConfig();
     this.updateDefinitionJSON();
   }
 
-  public onDesignerReady(designer: Designer) {
-    this.designer = designer;
-    this.updateIsValid();
-    console.log('designer ready', this.designer);
+  initToolboxConfig() {
+    this.toolboxConfiguration = {
+      groups: [
+        {
+          name: 'Components',
+          steps: [
+            createContainer(),
+            createIf(),
+            createSwitch(),
+            createTask(),
+          ]
+        },
+        {
+          name: 'Select Screen',
+          steps: [
+            createScreen(),
+          ]
+        },
+        {
+          name: 'Select API',
+          steps: [
+            createAPI(),
+          ]
+        },
+        {
+          name: 'Select Logic Rule',
+          steps: [
+            createLogicRule(),
+          ]
+        }
+      ]
+    };
   }
 
-  public onDefinitionChanged(definition: Definition) {
+  onDesignerReady(designer: Designer) {
+    this.designer = designer;
+    this.updateIsValid();
+    // console.log('designer ready', this.designer);
+  }
+
+  onDefinitionChanged(definition: Definition) {
     this.definition = definition;
     this.updateIsValid();
     this.updateDefinitionJSON();
-    console.log('definition has changed');
+    // console.log('definition has changed');
   }
 
-  public onSelectedStepIdChanged(stepId: string | null) {
+  onSelectedStepIdChanged(stepId: string | null) {
     this.selectedStepId = stepId;
   }
 
-  public onIsToolboxCollapsedChanged(isCollapsed: boolean) {
+  onIsToolboxCollapsedChanged(isCollapsed: boolean) {
     this.isToolboxCollapsed = isCollapsed;
   }
 
-  public onIsEditorCollapsedChanged(isCollapsed: boolean) {
+  onIsEditorCollapsedChanged(isCollapsed: boolean) {
     this.isEditorCollapsed = isCollapsed;
   }
 
-  public updateName(step: Step, event: Event, context: StepEditorContext) {
+  updateName(step: Step, event: Event, context: StepEditorContext) {
     step.name = (event.target as HTMLInputElement).value;
     context.notifyNameChanged();
   }
 
-  public updateProperty(properties: Properties, name: string, event: Event, context: GlobalEditorContext | StepEditorContext) {
+  updateProperty(properties: Properties, name: string, event: Event, context: GlobalEditorContext | StepEditorContext) {
     properties[name] = (event.target as HTMLInputElement).value;
     context.notifyPropertiesChanged();
   }
 
-  public reloadDefinitionClicked() {
-    this.definition = createDefinition();
+  saveDefinitionClicked() {
+    const res = {
+    }
+    localStorage.setItem('response', JSON.stringify(res));
+  }
+
+  loadDefinitionClicked() {
+    const lastDefinition = localStorage.getItem('response') ?? '';
+    this.definition = lastDefinition ? JSON.parse(lastDefinition) : createDefinition();
     this.updateDefinitionJSON();
   }
 
-  public toggleReadonlyClicked() {
+  toggleReadonlyClicked() {
     this.isReadonly = !this.isReadonly;
   }
 
-  public toggleSelectedStepClicked() {
+  toggleSelectedStepClicked() {
     if (this.selectedStepId) {
       this.selectedStepId = null;
     } else if (this.definition.sequence.length > 0) {
@@ -221,13 +284,13 @@ export class AppComponent implements OnInit {
     }
   }
 
-  public toggleToolboxClicked() {
-    this.isToolboxCollapsed = !this.isToolboxCollapsed;
-  }
-
-  public toggleEditorClicked() {
-    this.isEditorCollapsed = !this.isEditorCollapsed;
-  }
+  // toggleToolboxClicked() {
+  //   this.isToolboxCollapsed = !this.isToolboxCollapsed;
+  // }
+  //
+  // toggleEditorClicked() {
+  //   this.isEditorCollapsed = !this.isEditorCollapsed;
+  // }
 
   private updateDefinitionJSON() {
     this.definitionJSON = JSON.stringify(this.definition, null, 2);
