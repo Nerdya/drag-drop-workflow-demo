@@ -1,16 +1,28 @@
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-
-import { AppComponent } from './app.component';
+import {CommonModule} from "@angular/common";
+import {NgModule} from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {AppComponent} from './app.component';
+import {SequentialWorkflowDesignerModule} from "sequential-workflow-designer-angular";
+import {NoopAnimationsModule} from "@angular/platform-browser/animations";
+import {MatTabsModule} from "@angular/material/tabs";
+import {MatInputModule} from "@angular/material/input";
+import {MatButtonModule} from "@angular/material/button";
 
 @NgModule({
   declarations: [
     AppComponent
   ],
   imports: [
-    BrowserModule
+    CommonModule,
+    BrowserModule,
+    SequentialWorkflowDesignerModule,
+    NoopAnimationsModule,
+    MatTabsModule,
+    MatInputModule,
+    MatButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}
